@@ -4,6 +4,14 @@ from nb_to_py.cell import Cell
 import ast
 
 
+class My_Visitor(ast.NodeVisitor):
+    visited_nodes=[]
+
+    def generic_visit(self, node):
+        self.visited_nodes.append(node)
+        ast.NodeVisitor.generic_visit(self, node)
+
+
 class Function:
     def __init__(self, body: str, input: Tuple[str], output: Tuple[str]):
         self.input = input
@@ -28,7 +36,11 @@ class FunctionBuilder:
 
         assigned = set()
         input = set()
-        for node in ast.walk(tree):
+
+        x = My_Visitor()
+        x.visit(tree)
+
+        for node in x.visited_nodes:
             if isinstance(node, ast.Assign):
                 assigned.update(get_variables_from_node(node))
             elif (
@@ -42,7 +54,7 @@ class FunctionBuilder:
     def build_function(self, cell: Cell):
         tree = self._get_source_tree(cell.source)
         input, assigned = self._extract_variables(tree)
-        return Function(body, input, output)
+        return Function("", input, assigned)
 
 
 class RefactorCellAdapter:
